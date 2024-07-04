@@ -75,7 +75,7 @@ app.post("/registrationcheck", async (req, res) => {
       otp: otp,
     });
     const mailOptions = {
-      from: "patiencecoder@gmail.com",
+      from: "shashwatanshul@gmail.com",
       to: email,
       subject: "OTP for Registration",
       html: `
@@ -142,7 +142,7 @@ app.post("/send-email", async (req, res) => {
     const users = await Userclass.find({});
     const allUsersEmail = users.map((user) => {
       const mailOptions = {
-        from: "patiencecoder@gmail.com",
+        from: "shashwatanshul@gmail.com",
         to: user.email,
         subject: "Offer Alert",
         html: `
@@ -165,8 +165,29 @@ app.post("/send-email", async (req, res) => {
 });
 
 //THIS IS AN ENDPOINT FOR RESETTING THE PASSWORD
+// app.post("/forgotpassword", async (req, res) => {
+//   const { email, newpassword } = req.body;
+//   try {
+//     const checkMail = await Userclass.findOne({ email });
+//     if (!checkMail) {
+//       return res
+//         .status(401)
+//         .json({ message: "Email not found in our database" });
+//     }
+//     const salt = await bcrypt.genSalt();
+//     const hashedPassword = await bcrypt.hash(newpassword, salt);
+//     checkMail.password = hashedPassword;
+//     await checkMail.save();
+//     return res.status(200).json({ message: "Password changed successfully" });
+//   } catch (err) {
+//     console.log(err);
+//     return res.status(500).json({ error: "Internal server error" });
+//   }
+// });
+
+// THIS IS AN ENDPOINT FOR INITIATING PASSWORD RESET (SEND OTP)
 app.post("/forgotpassword", async (req, res) => {
-  const { email, newpassword } = req.body;
+  const { email } = req.body;
   try {
     const checkMail = await Userclass.findOne({ email });
     if (!checkMail) {
@@ -174,10 +195,48 @@ app.post("/forgotpassword", async (req, res) => {
         .status(401)
         .json({ message: "Email not found in our database" });
     }
+    const otp = Math.floor(1000 + Math.random() * 9000);
+    checkMail.otp = otp;
+    await checkMail.save();
+
+    const mailOptions = {
+      from: "shashwatanshul@gmail.com",
+      to: email,
+      subject: "OTP for Password Reset",
+      html: `
+        <div style="background-color:#242424;color:white;padding:20px;border-radius:10px;text-align:center;">
+            <p>Hi ${checkMail.username}</p>
+            <p>Your OTP for resetting your password is ${otp}</p>
+        </div>
+      `,
+    };
+    transporter.sendMail(mailOptions, (err, success) => {
+      if (err) {
+        console.log(err);
+        return res.status(500).json({ error: "Failed to send OTP" });
+      } else {
+        return res.status(200).json({ message: "OTP Sent" });
+      }
+    });
+  } catch (err) {
+    console.log(err);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// THIS IS AN ENDPOINT FOR VERIFYING OTP AND RESETTING PASSWORD
+app.post("/resetpassword", async (req, res) => {
+  const { email, otp, newpassword } = req.body;
+  try {
+    const user = await Userclass.findOne({ email, otp });
+    if (!user) {
+      return res.status(401).json({ message: "Invalid OTP" });
+    }
     const salt = await bcrypt.genSalt();
     const hashedPassword = await bcrypt.hash(newpassword, salt);
-    checkMail.password = hashedPassword;
-    await checkMail.save();
+    user.password = hashedPassword;
+    user.otp = null; // Clear OTP after successful password reset
+    await user.save();
     return res.status(200).json({ message: "Password changed successfully" });
   } catch (err) {
     console.log(err);
@@ -197,6 +256,17 @@ app.post("/logout", (req, res) => {
     return res.status(500).json({ error: "Internal Server Error" });
   }
 });
+
+app.delete("/delete-unverified-users", async (req, res) => {
+  try {
+    await Userclass.deleteMany({ verified: false });
+    return res.status(200).json({ message: "Unverified users deleted" });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
 //PORT
 
 app.listen(process.env.PORT || port, () => {

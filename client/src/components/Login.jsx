@@ -13,16 +13,13 @@ export default function Login() {
     if (userInput.email === "" || userInput.password === "") {
       return toast.error("Every input field must be filled");
     }
-    const callAPI = await fetch(
-      "https://evening-basin-91117-fe7ab328601f.herokuapp.com/logincheck",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(userInput),
-      }
-    );
+    const callAPI = await fetch("/logincheck", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(userInput),
+    });
     const response = await callAPI.json();
     if (response.error) {
       return toast.error(response.error);
@@ -43,7 +40,7 @@ export default function Login() {
           type="text"
           id="email"
           name="email"
-          placeholder="johndoe@gmail.com"
+          placeholder="Enter Email"
           onChange={handleChange}
         />
         <label htmlFor="password">Password :</label>
@@ -51,10 +48,11 @@ export default function Login() {
           type="text"
           id="password"
           name="password"
+          placeholder="Enter Password"
           onChange={handleChange}
         />
         <div className="routes">
-          <Link to="/register">Don't have an account ? register</Link>
+          <Link to="/register">Does not have an account ? register</Link>
           <Link to="/forgotpassword">forgot password?</Link>
         </div>
         <button>Login</button>

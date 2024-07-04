@@ -7,6 +7,7 @@
 }
 .login-container h2{
     text-align: center;
+    color:white;
 }
 .login-container form{
     display: flex;

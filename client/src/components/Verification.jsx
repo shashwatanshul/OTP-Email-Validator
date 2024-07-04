@@ -10,16 +10,13 @@ export default function Verification() {
     if (userOTP === "") {
       return toast.error("Please enter the otp...");
     }
-    const callAPI = await fetch(
-      "https://evening-basin-91117-fe7ab328601f.herokuapp.com/verificationcheck",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ otp: userOTP }),
-      }
-    );
+    const callAPI = await fetch("/verificationcheck", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ otp: userOTP }),
+    });
     const response = await callAPI.json();
     if (response.error) {
       return toast.error(response.error);
